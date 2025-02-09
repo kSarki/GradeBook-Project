@@ -1,69 +1,57 @@
-import os
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <sstream>
+using namespace std;
 
-MAX_TEST_SCORES = 5  
+struct Student {
+    string name;
+    vector<int> scores;
+    double average() const {
+        int sum = 0;
+        for (int s : scores) sum += s;
+        return scores.empty() ? 0 : (double)sum / scores.size();
+    }
+    char grade() const {
+        double avg = average();
+        return (avg >= 90) ? 'A' : (avg >= 80) ? 'B' : (avg >= 70) ? 'C' : (avg >= 60) ? 'D' : 'F';
+    }
+};
 
-def read_data(filename):
-    
-    names = []
-    scores = []
-    try:
-        with open(filename, 'r') as file:
-            for line in file:
-                data = line.strip().split()
-                if len(data) < 2:
-                    continue 
-                names.append(data[0])
-                scores.append([int(score) for score in data[1:MAX_TEST_SCORES + 1]])  
-    except FileNotFoundError:
-        print("Error: File not found.")
-        return [], []
-    return names, scores
+vector<Student> readData(const string &filename) {
+    ifstream file(filename);
+    vector<Student> students;
+    string line, name;
+    int score;
 
-def calculate_averages(scores):
-    
-    averages = []
-    for score_list in scores:
-        if len(score_list) == 0:
-            averages.append(0)
-        else:
-            averages.append(sum(score_list) / len(score_list))
-    return averages
+    if (!file) {
+        cerr << "Error: File not found." << endl;
+        return students;
+    }
 
-def get_letter_grade(average):
-    
-    if average >= 90:
-        return 'A'
-    elif average >= 80:
-        return 'B'
-    elif average >= 70:
-        return 'C'
-    elif average >= 60:
-        return 'D'
-    else:
-        return 'F'
+    while (getline(file, line)) {
+        stringstream ss(line);
+        ss >> name;
+        Student student{name, {}};
+        while (ss >> score) student.scores.push_back(score);
+        students.push_back(student);
+    }
+    return students;
+}
 
-def print_report(names, averages):
-   
-    print("{:<15} {:<10} {:<10}".format("Name", "Average", "Grade"))
-    print("-" * 35)
-    for i in range(len(names)):
-        print("{:<15} {:<10.2f} {:<10}".format(names[i], averages[i], get_letter_grade(averages[i])))
-    print(f"Total students: {len(names)}")  
+void printReport(const vector<Student> &students) {
+    cout << "Name           Average   Grade\n";
+    cout << "-------------------------------\n";
+    for (const auto &s : students)
+        cout << s.name << "\t" << s.average() << "\t" << s.grade() << "\n";
+    cout << "Total students: " << students.size() << endl;
+}
 
-def main():
-    filename = "students.txt"
-    if not os.path.exists(filename):
-        print(f"File '{filename}' does not exist. Please provide the correct file.")
-        return
+int main() {
+    string filename = "students.txt";
+    vector<Student> students = readData(filename);
+    if (!students.empty()) printReport(students);
+}
 
-    names, scores = read_data(filename)
-    if not names:
-        print("No data found in the file.")
-        return
-
-    averages = calculate_averages(scores)
-    print_report(names, averages)
-
-main()
-
+ 
 
